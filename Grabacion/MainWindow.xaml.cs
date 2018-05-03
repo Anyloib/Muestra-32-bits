@@ -62,23 +62,58 @@ namespace Grabacion
             int bytesGrabados = e.BytesRecorded;
 
             double acumulador = 0;
-            double nummuestras = 0;
+
+            double nummuestras = bytesGrabados / 2;
+            int exponente = 1;
+            int numeroMuestraComplejas = 0;
+            int bitsMaximas = 0;
+
+            do //1200
+            {
+                bitsMaximas = (int) Math.Pow(2, exponente);
+                exponente++;
+            } while (bitsMaximas < nummuestras);
+
+            //bitsMaximas = 2048
+            //exponente = 12
+
+            //numeroMuestraComplejas = 1024
+            //exponente = 10
+
+            exponente += 2;
+            numeroMuestraComplejas = bitsMaximas / 2;
+
+            Complex[] muestrasCompletas = new Complex[numeroMuestraComplejas]; 
+
             for (int i=0; i < bytesGrabados; i+=2)
             {
                 short muestra = (short)(buffer[i + 1] << 8 | buffer[i]);
 
                 float muestra32bits = (float)muestra / 32768.0f;
                 slbvolumen.Value = Math.Abs(muestra32bits);
-
+                if (i / 2 < numeroMuestraComplejas)
+                {
+                    muestrasCompletas[i / 2].X = muestra32bits;
+                }
 
 
                 //acumulador += muestra;
                 //nummuestras++;
             }
-            double promedio = acumulador / nummuestras;
+            //double promedio = acumulador / nummuestras;
             //slbvolumen.Value = promedio;
-
             //writer.Write(buffer, 0, bytesGrabados);
+
+            FastFourierTransform.FFT(true, exponente, muestrasCompletas);
+            float[] valoresAbsolutos =
+                new float[muestrasCompletas.Length];
+           for(int i =0; i < muestrasCompletas.Length; i++)
+            {
+                valoresAbsolutos[i] = (float)Math.Sqrt((muestrasCompletas[i].X * muestrasCompletas[i].X) -
+                    (muestrasCompletas[i].Y * muestrasCompletas[i].Y));
+            }
+
+           
         }
 
         private void btnfinalizar_Click(object sender, RoutedEventArgs e)
